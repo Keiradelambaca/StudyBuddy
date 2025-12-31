@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardTaskItem"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/surface_white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="14dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Priority strip / icon container -->
+        <View
+            android:id="@+id/viewPriority"
+            android:layout_width="6dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="12dp"
+            android:background="@color/primary_blue"
+            android:contentDescription="Priority indicator"/>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvTaskTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Mobile Dev CA2"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <TextView
+                android:id="@+id/tvTaskMeta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Due: Tomorrow • High"
+                android:textSize="13sp"
+                android:textColor="@color/text_secondary"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+        </LinearLayout>
+
+        <!-- Optional status icon (e.g. checkmark) -->
+        <ImageView
+            android:id="@+id/imgStatus"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/ic_check"
+            android:contentDescription="Task status"
+            app:tint="@color/secondary_teal"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

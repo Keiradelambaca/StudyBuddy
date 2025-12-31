@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light"
+    tools:context="home.HomeActivity">
+
+    <!-- Greeting -->
+    <TextView
+        android:id="@+id/tvGreeting"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="18dp"
+        android:text="Hello, User"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <TextView
+        android:id="@+id/tvSummary"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="18dp"
+        android:layout_marginEnd="18dp"
+        android:text="You have 2 tasks due this week"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        app:layout_constraintTop_toBottomOf="@id/tvGreeting"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Focus Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardFocus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="18dp"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="@color/surface_white"
+        app:layout_constraintTop_toBottomOf="@id/tvSummary"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:text="Focus Now"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"/>
+
+            <TextView
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_marginTop="6dp"
+                android:text="Start a 25-minute Pomodoro session"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+
+            <Button
+                android:id="@+id/btnStartFocus"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"
+                android:text="Start Focus ▶"
+                android:textAllCaps="false"
+                android:backgroundTint="@color/primary_blue"
+                android:textColor="@color/text_on_primary"/>
+
+            <TextView
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_marginTop="10dp"
+                android:text="Last session: 50 mins"
+                android:textSize="12sp"
+                android:textColor="@color/text_muted"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Upcoming Tasks Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardUpcomingTasks"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="18dp"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="@color/surface_white"
+        app:layout_constraintTop_toBottomOf="@id/cardFocus"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/cardQuote">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Header row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvUpcoming"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Upcoming Tasks"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"/>
+
+                <TextView
+                    android:id="@+id/tvSeeAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="See all →"
+                    android:textSize="14sp"
+                    android:textColor="@color/primary_blue"/>
+            </LinearLayout>
+
+            <!-- RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvTasks"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:visibility="visible"
+                android:clipToPadding="false"
+                tools:listitem="@layout/item_upcoming_task"/>
+
+            <!-- Empty state (show when there are no tasks) -->
+            <LinearLayout
+                android:id="@+id/emptyTasksState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:padding="12dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/tvEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No tasks due"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"/>
+
+                <TextView
+                    android:id="@+id/tvEmptySubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="You're all caught up. Add a new task or start a focus session."
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="center"/>
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+    <!-- Quote Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardQuote"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="18dp"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/accent_amber_soft"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:text="QOTD"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"/>
+
+            <TextView
+                android:id="@+id/tvQuoteText"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_marginTop="8dp"
+                android:text="“Success is the sum of small efforts repeated daily.”"
+                android:textSize="14sp"
+                android:textColor="@color/text_on_accent"/>
+
+            <TextView
+                android:id="@+id/tvQuoteAuthor"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_marginTop="4dp"
+                android:text="— Robert Collier"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"/>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

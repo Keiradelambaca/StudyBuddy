@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- PRIMARY (Focus & Productivity Blue) -->
+    <color name="primary_blue">#FF2F5DFF</color>
+    <color name="primary_blue_dark">#FF1E3EDB</color>
+    <color name="primary_blue_light">#FFDDE6FF</color>
+
+    <!-- SECONDARY (Calm Teal) -->
+    <color name="secondary_teal">#FF1BA6A6</color>
+    <color name="secondary_teal_dark">#FF0D7F7F</color>
+    <color name="secondary_teal_light">#FFCFF4F1</color>
+
+    <!-- ACCENT (Motivation / Action) -->
+    <color name="accent_amber">#FFFFB703</color>
+    <color name="accent_amber_soft">#FFFFE8B3</color>
+
+    <!-- OPTIONAL WARM ACCENT -->
+    <color name="accent_coral">#FFFF5A5F</color>
+    <color name="accent_coral_soft">#FFFFD6D8</color>
+
+    <!-- BACKGROUNDS -->
+    <color name="background_light">#FFF9F1E4</color>
+    <color name="surface_white">#FFFFFFFF</color>
+    <color name="surface_alt">#FFEEF2FF</color>
+
+    <!-- TEXT COLORS -->
+    <color name="text_primary">#FF0F172A</color>
+    <color name="text_secondary">#FF475569</color>
+    <color name="text_muted">#FF94A3B8</color>
+    <color name="text_on_primary">#FFFFFFFF</color>
+    <color name="text_on_accent">#FF1F2937</color>
+
+    <!-- DIVIDERS / BORDERS -->
+    <color name="divider_grey">#FFE2E8F0</color>
+    <color name="outline_grey">#FFCBD5E1</color>
+
+    <!-- FEEDBACK STATES -->
+    <color name="success_green">#FF22C55E</color>
+    <color name="success_green_soft">#FFDCFCE7</color>
+
+    <color name="warning_orange">#FFF59E0B</color>
+    <color name="warning_orange_soft">#FFFEF3C7</color>
+
+    <color name="error_red">#FFEF4444</color>
+    <color name="error_red_soft">#FFFEE2E2</color>
+
+    <color name="info_blue">#FF3B82F6</color>
+    <color name="info_blue_soft">#FFDBEAFE</color>
+</resources>
