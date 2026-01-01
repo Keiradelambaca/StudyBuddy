@@ -7,4 +7,6 @@
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
     app:menu="@menu/bottom_nav_menu"
+    app:itemIconTint="@color/white"
+    app:itemTextColor="@color/white"
     app:labelVisibilityMode="labeled"/>
