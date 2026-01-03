@@ -57,5 +57,19 @@ public class FirestoreRepo {
                 .document(user.getUid())
                 .set(data, com.google.firebase.firestore.SetOptions.merge());
     }
+
+    public Task<Void> updateName(String name) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            return com.google.android.gms.tasks.Tasks.forException(
+                    new IllegalStateException("No logged-in user")
+            );
+        }
+
+        return db.collection(COLLECTION_PROFILES)
+                .document(user.getUid())
+                .update("name", name);
+    }
+
 }
 
