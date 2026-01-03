@@ -43,11 +43,13 @@
             android:name=".home.HomeActivity"
             android:exported="false" />
 
-        <!--
         <activity
             android:name=".tasks.TasksActivity"
             android:exported="false" />
-            -->
+
+        <activity
+            android:name=".tasks.TaskDetailActivity"
+            android:exported="false"/>
 
         <activity
             android:name=".modules.ModulesActivity"

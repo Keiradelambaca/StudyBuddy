@@ -3,21 +3,21 @@ package com.example.studybuddy.home;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.studybuddy.BaseBottomNavActivity;
 import com.example.studybuddy.R;
-import com.example.studybuddy.adapter.TaskAdapter;
+import com.example.studybuddy.adapter.TasksAdapter;
 import com.example.studybuddy.adapter.Task;
 import com.example.studybuddy.focus.FocusActivity;
 import com.example.studybuddy.modules.ModulesActivity;
 import com.example.studybuddy.profile.ProfileActivity;
+import com.example.studybuddy.tasks.TaskDetailActivity;
 import com.example.studybuddy.tasks.TasksActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -38,11 +38,12 @@ import java.util.Locale;
  * - Quote card + refresh button (optional; if you removed refresh from XML, delete that part)
  * - Bottom navigation (5 pages)
  */
-public class HomeActivity extends AppCompatActivity {
+public class HomeActivity extends BaseBottomNavActivity {
 
     private RecyclerView rvTasks;
     private View emptyTasksState;
-    private TaskAdapter taskAdapter;
+    private TasksAdapter taskAdapter;
+    private List<Task> tasks = new ArrayList<>();
 
     private TextView tvGreeting;
     private TextView tvSummary;
@@ -54,10 +55,10 @@ public class HomeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+        setupBottomNav(R.id.nav_modules);
 
         bindViews();
         loadUserNameFromFirestoreAndSetGreeting();
-        setupBottomNav();
         setupTasksRecycler();
         setupClicks();
 
@@ -80,7 +81,12 @@ public class HomeActivity extends AppCompatActivity {
 
     private void setupTasksRecycler() {
         rvTasks.setLayoutManager(new LinearLayoutManager(this));
-        taskAdapter = new TaskAdapter(new ArrayList<>());
+        taskAdapter = new TasksAdapter(tasks, task -> {
+            Intent i = new Intent(HomeActivity.this, TaskDetailActivity.class);
+            i.putExtra("TASK_ID", task.getId());
+            startActivity(i);
+        });
+
         rvTasks.setAdapter(taskAdapter);
     }
 
@@ -153,9 +159,6 @@ public class HomeActivity extends AppCompatActivity {
     private void loadUpcomingTasks() {
         // ---- SAMPLE DATA (replace with DB) ----
         List<Task> tasks = new ArrayList<>();
-        tasks.add(new Task("Mobile Dev CA2", "Tomorrow", "High"));
-        tasks.add(new Task("Distributed Systems Lab", "Fri", "Medium"));
-        tasks.add(new Task("Revise Design Patterns", "Sun", "Low"));
         // --------------------------------------
 
         taskAdapter.setTasks(tasks);
@@ -182,34 +185,7 @@ public class HomeActivity extends AppCompatActivity {
         tvQuoteAuthor.setText("— Robert Collier");
     }
 
-    /**
-     * Bottom navigation for 5 pages.
-     * This matches bottom_nav_menu.xml ids:
-     * nav_home, nav_tasks, nav_modules, nav_focus, nav_profile
-     */
-    private void setupBottomNav() {
-        BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-        bottomNav.setSelectedItemId(R.id.nav_home);
 
-        bottomNav.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_home) return true;
-
-            Intent intent = null;
-
-            if (id == R.id.nav_tasks) intent = new Intent(this, TasksActivity.class);
-            else if (id == R.id.nav_modules) intent = new Intent(this, ModulesActivity.class);
-            else if (id == R.id.nav_focus) intent = new Intent(this, FocusActivity.class);
-            else if (id == R.id.nav_profile) intent = new Intent(this, ProfileActivity.class);
-
-            if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                overridePendingTransition(0, 0);
-            }
-            return true;
-        });
-    }
 }
 
 

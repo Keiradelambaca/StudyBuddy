@@ -78,7 +78,6 @@ public class ModulesActivity extends BaseBottomNavActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_modules);
-
         setupBottomNav(R.id.nav_modules);
 
         bindViews();

@@ -30,6 +30,7 @@ public class ProfileActivity extends BaseBottomNavActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_profile);
+        setupBottomNav(R.id.nav_modules);
 
         emailValue = findViewById(R.id.emailValue);
         uidValue   = findViewById(R.id.uidValue);

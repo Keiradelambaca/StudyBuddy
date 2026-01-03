@@ -15,6 +15,10 @@ public abstract class BaseBottomNavActivity extends AppCompatActivity {
 
     protected void setupBottomNav(int selectedItemId) {
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
+        if (bottomNav == null) return; // layout might not include it
+
+        // Set selected item WITHOUT firing navigation loops
+        bottomNav.setOnItemSelectedListener(null);
         bottomNav.setSelectedItemId(selectedItemId);
 
         bottomNav.setOnItemSelectedListener(item -> {
@@ -30,9 +34,12 @@ public abstract class BaseBottomNavActivity extends AppCompatActivity {
             else if (id == R.id.nav_profile) intent = new Intent(this, ProfileActivity.class);
 
             if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                // Proper bottom-nav behavior:
+                // bring existing instance to front, don’t create duplicates
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
                 overridePendingTransition(0, 0);
+                finish(); // prevents stacking 20 screens deep
             }
             return true;
         });
