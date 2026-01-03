@@ -115,7 +115,6 @@ public class ModulesActivity extends BaseBottomNavActivity {
         tvModuleValidation = findViewById(R.id.tvModuleValidation);
 
         calendarContainer = findViewById(R.id.calendarContainer);
-        toggleCalendarView = findViewById(R.id.toggleCalendarView);
         btnPickStartTime = findViewById(R.id.btnPickStartTime);
         btnPickEndTime = findViewById(R.id.btnPickEndTime);
 
@@ -360,13 +359,6 @@ public class ModulesActivity extends BaseBottomNavActivity {
 
         // Default: Month
         showMonth();
-
-        toggleCalendarView.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
-            if (!isChecked) return;
-            if (checkedId == R.id.btnMonth) showMonth();
-            else if (checkedId == R.id.btnWeek) showWeek(false);
-            else if (checkedId == R.id.btnDay) showWeek(true);
-        });
     }
 
     private void showMonth() {

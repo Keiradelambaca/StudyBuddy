@@ -73,42 +73,11 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Academic Calendar"
+                            android:text="Weekly Schedule"
                             android:textColor="@color/text_primary"
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <com.google.android.material.button.MaterialButtonToggleGroup
-                            android:id="@+id/toggleCalendarView"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:selectionRequired="true"
-                            app:singleSelection="true">
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnMonth"
-                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:text="Month"
-                                android:textAllCaps="false" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnWeek"
-                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:text="Week"
-                                android:textAllCaps="false" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnDay"
-                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:text="Day"
-                                android:textAllCaps="false" />
-                        </com.google.android.material.button.MaterialButtonToggleGroup>
                     </LinearLayout>
 
                     <!-- Calendar container placeholder -->
@@ -125,7 +94,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
                             android:gravity="center"
-                            android:text="Calendar goes here (Month / Week / Day)"
+                            android:text="Calendar goes here"
                             android:textColor="@color/text_muted"
                             android:textSize="14sp" />
                     </FrameLayout>
