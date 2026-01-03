@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Kotlin compiler error logs
+.kotlin/errors/
