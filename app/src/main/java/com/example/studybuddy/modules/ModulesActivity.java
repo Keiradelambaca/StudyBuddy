@@ -1,10 +1,12 @@
 package com.example.studybuddy.modules;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -17,6 +19,8 @@ import com.example.studybuddy.BaseBottomNavActivity;
 import com.example.studybuddy.R;
 import com.example.studybuddy.adapter.Module;
 import com.example.studybuddy.adapter.ModulesAdapter;
+import com.example.studybuddy.adapter.TimetableEvent;
+import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -30,6 +34,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import android.app.TimePickerDialog;
+import java.util.Calendar;
+import java.util.Locale;
+
 
 public class ModulesActivity extends BaseBottomNavActivity {
 
@@ -54,6 +63,17 @@ public class ModulesActivity extends BaseBottomNavActivity {
     private CollectionReference modulesRef;
     private ListenerRegistration modulesListener;
 
+    // Calendar
+    private Button btnPickStartTime, btnPickEndTime;
+    private int selectedStartMin = -1;
+    private int selectedEndMin = -1;
+    private CollectionReference timetableRef;
+    private FrameLayout calendarContainer;
+    private MaterialButtonToggleGroup toggleCalendarView;
+    private View monthView;
+    private View weekView;
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +86,7 @@ public class ModulesActivity extends BaseBottomNavActivity {
         setupSpinnersIfEmpty();   // safe helper (won't override if already set)
         setupFirebase();
         setupAddModule();
+        setupTimePickers();
 
         // Load from DB and keep UI in sync
         listenForModules();
@@ -92,6 +113,12 @@ public class ModulesActivity extends BaseBottomNavActivity {
 
         btnAddModule = findViewById(R.id.btnAddModule);
         tvModuleValidation = findViewById(R.id.tvModuleValidation);
+
+        calendarContainer = findViewById(R.id.calendarContainer);
+        toggleCalendarView = findViewById(R.id.toggleCalendarView);
+        btnPickStartTime = findViewById(R.id.btnPickStartTime);
+        btnPickEndTime = findViewById(R.id.btnPickEndTime);
+
     }
 
     private void setupRecyclerView() {
@@ -132,6 +159,8 @@ public class ModulesActivity extends BaseBottomNavActivity {
         db = FirebaseFirestore.getInstance();
 
         FirebaseUser user = auth.getCurrentUser();
+        Log.d("ModulesActivity", "currentUser=" + (user == null ? "null" : user.getUid()));
+
         if (user == null) {
             // If you want, redirect to Login here. For now show a message.
             showError("You must be logged in to manage modules.");
@@ -139,11 +168,17 @@ public class ModulesActivity extends BaseBottomNavActivity {
             return;
         }
 
+
         // Store modules per user:
         // users/{uid}/modules/{moduleId}
         modulesRef = db.collection("users")
                 .document(user.getUid())
                 .collection("modules");
+
+        timetableRef = db.collection("users")
+                .document(user.getUid())
+                .collection("timetable_events");
+
     }
 
     private void listenForModules() {
@@ -194,7 +229,17 @@ public class ModulesActivity extends BaseBottomNavActivity {
                 return;
             }
 
-            if (modulesRef == null) {
+            if (selectedStartMin < 0 || selectedEndMin < 0) {
+                showValidation("Please pick start and end time");
+                return;
+            }
+
+            if (selectedEndMin <= selectedStartMin) {
+                showValidation("End time must be after start time");
+                return;
+            }
+
+            if (modulesRef == null || timetableRef == null) {
                 showValidation("Not connected. Please log in again.");
                 return;
             }
@@ -203,33 +248,72 @@ public class ModulesActivity extends BaseBottomNavActivity {
 
             String year = safeSpinnerValue(spYear);
             String semester = safeSpinnerValue(spSemester);
-            String dayOfWeek = safeSpinnerValue(spDayOfWeek);
 
-            // Build Firestore map
-            Map<String, Object> data = new HashMap<>();
-            data.put("title", title);
-            data.put("description", description);
-            data.put("year", year);
-            data.put("semester", semester);
-            data.put("dayOfWeek", dayOfWeek);
-            data.put("createdAt", System.currentTimeMillis());
+            // Convert day string -> Calendar day-of-week int
+            int dayOfWeek = mapDayToCalendarConstant(safeSpinnerValue(spDayOfWeek));
 
             btnAddModule.setEnabled(false);
 
-            // Add new module document
-            modulesRef.add(data)
-                    .addOnSuccessListener(ref -> {
-                        btnAddModule.setEnabled(true);
-                        clearForm();
+            // 1) Save module
+            Map<String, Object> moduleData = new HashMap<>();
+            moduleData.put("title", title);
+            moduleData.put("description", description);
+            moduleData.put("year", year);
+            moduleData.put("semester", semester);
+            moduleData.put("createdAt", System.currentTimeMillis());
 
-                        // No need to manually add to list:
-                        // snapshot listener will refresh automatically.
+            modulesRef.add(moduleData)
+                    .addOnSuccessListener(moduleDoc -> {
+                        String moduleId = moduleDoc.getId();
+
+                        // 2) Save timetable recurring event
+                        TimetableEvent event = new TimetableEvent(
+                                moduleId,
+                                title,
+                                dayOfWeek,
+                                selectedStartMin,
+                                selectedEndMin
+                        );
+
+                        timetableRef.add(event)
+                                .addOnSuccessListener(eventDoc -> {
+                                    btnAddModule.setEnabled(true);
+                                    clearForm();
+                                    resetTimeButtons();
+                                    // listeners refresh UI automatically
+                                })
+                                .addOnFailureListener(e -> {
+                                    btnAddModule.setEnabled(true);
+                                    showValidation("Saved module, but failed to create timetable event: " + e.getMessage());
+                                });
+
                     })
                     .addOnFailureListener(e -> {
                         btnAddModule.setEnabled(true);
                         showValidation("Failed to save module: " + e.getMessage());
                     });
         });
+    }
+
+    private void resetTimeButtons() {
+        selectedStartMin = -1;
+        selectedEndMin = -1;
+        btnPickStartTime.setText("Start time");
+        btnPickEndTime.setText("End time");
+    }
+
+    private int mapDayToCalendarConstant(String day) {
+        if (day == null) return Calendar.MONDAY;
+        switch (day.toLowerCase(Locale.ROOT)) {
+            case "sunday": return Calendar.SUNDAY;
+            case "monday": return Calendar.MONDAY;
+            case "tuesday": return Calendar.TUESDAY;
+            case "wednesday": return Calendar.WEDNESDAY;
+            case "thursday": return Calendar.THURSDAY;
+            case "friday": return Calendar.FRIDAY;
+            case "saturday": return Calendar.SATURDAY;
+            default: return Calendar.MONDAY;
+        }
     }
 
     private void updateModulesUI() {
@@ -248,6 +332,7 @@ public class ModulesActivity extends BaseBottomNavActivity {
         spYear.setSelection(0);
         spSemester.setSelection(0);
         spDayOfWeek.setSelection(0);
+        tvModuleValidation.setVisibility(View.GONE);
     }
 
     private String safeSpinnerValue(Spinner spinner) {
@@ -267,5 +352,71 @@ public class ModulesActivity extends BaseBottomNavActivity {
     private void showError(String msg) {
         // simple UI error; you can replace with Snackbar if you want
         showValidation(msg);
+    }
+
+    private void setupCalendarSwitcher() {
+        monthView = getLayoutInflater().inflate(R.layout.view_calendar_month, calendarContainer, false);
+        weekView  = getLayoutInflater().inflate(R.layout.view_calendar_week, calendarContainer, false);
+
+        // Default: Month
+        showMonth();
+
+        toggleCalendarView.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) return;
+            if (checkedId == R.id.btnMonth) showMonth();
+            else if (checkedId == R.id.btnWeek) showWeek(false);
+            else if (checkedId == R.id.btnDay) showWeek(true);
+        });
+    }
+
+    private void showMonth() {
+        calendarContainer.removeAllViews();
+        calendarContainer.addView(monthView);
+
+        // TODO: init month calendar + click date -> load events
+    }
+
+    private void showWeek(boolean singleDay) {
+        calendarContainer.removeAllViews();
+        calendarContainer.addView(weekView);
+
+        // TODO: init WeekView
+        // If singleDay=true, configure WeekView to show one day; else 5/7 days.
+    }
+
+    private void setupTimePickers() {
+        btnPickStartTime.setOnClickListener(v -> openTimePicker(true));
+        btnPickEndTime.setOnClickListener(v -> openTimePicker(false));
+    }
+
+    private void openTimePicker(boolean isStart) {
+        Calendar now = Calendar.getInstance();
+        int hour = now.get(Calendar.HOUR_OF_DAY);
+        int minute = now.get(Calendar.MINUTE);
+
+        TimePickerDialog dialog = new TimePickerDialog(
+                this,
+                (view, pickedHour, pickedMinute) -> {
+                    int mins = pickedHour * 60 + pickedMinute;
+
+                    if (isStart) {
+                        selectedStartMin = mins;
+                        btnPickStartTime.setText(formatTime(mins));
+                    } else {
+                        selectedEndMin = mins;
+                        btnPickEndTime.setText(formatTime(mins));
+                    }
+                },
+                hour,
+                minute,
+                true
+        );
+        dialog.show();
+    }
+
+    private String formatTime(int mins) {
+        int h = mins / 60;
+        int m = mins % 60;
+        return String.format(Locale.getDefault(), "%02d:%02d", h, m);
     }
 }

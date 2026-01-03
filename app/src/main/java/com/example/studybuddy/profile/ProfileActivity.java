@@ -10,7 +10,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 
 import com.example.studybuddy.BaseBottomNavActivity;
-import com.example.studybuddy.MainActivity;
+import com.example.studybuddy.LoginActivity;
 import com.example.studybuddy.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -85,7 +85,7 @@ public class ProfileActivity extends BaseBottomNavActivity {
             FirebaseAuth.getInstance().signOut();
 
             // Return to login screen
-            Intent i = new Intent(this, MainActivity.class);
+            Intent i = new Intent(this, LoginActivity.class);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(i);
             finish();
