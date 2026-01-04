@@ -23,6 +23,7 @@ public abstract class BaseBottomNavActivity extends AppCompatActivity {
 
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
+            android.util.Log.d("BottomNav", "clicked id=" + id + " selected=" + selectedItemId);
             if (id == selectedItemId) return true;
 
             Intent intent = null;
@@ -34,14 +35,19 @@ public abstract class BaseBottomNavActivity extends AppCompatActivity {
             else if (id == R.id.nav_profile) intent = new Intent(this, ProfileActivity.class);
 
             if (intent != null) {
-                // Proper bottom-nav behavior:
-                // bring existing instance to front, don’t create duplicates
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-                overridePendingTransition(0, 0);
-                finish(); // prevents stacking 20 screens deep
+
+                try {
+                    startActivity(intent);
+                    overridePendingTransition(0, 0);
+                    // Only finish AFTER starting successfully
+                    finish();
+                } catch (Exception e) {
+                    e.printStackTrace(); // shows up in Logcat
+                }
             }
             return true;
+
         });
     }
 }

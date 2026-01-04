@@ -21,6 +21,12 @@ public class Task {
     private boolean completed;
     private long createdAt;
 
+    private String type; // task, assignment, exam, demo, presentation
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+
     // REQUIRED: no-arg constructor for Firestore
     public Task() {}
 

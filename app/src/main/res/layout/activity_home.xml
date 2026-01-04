@@ -66,7 +66,7 @@
                 android:layout_height="match_parent"
                 android:layout_width="match_parent"
                 android:layout_marginTop="6dp"
-                android:text="Start a 25-minute Pomodoro session"
+                android:text="Start a Pomodoro focus session"
                 android:textSize="14sp"
                 android:textColor="@color/text_secondary"/>
 
@@ -75,18 +75,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="14dp"
+                app:cornerRadius="24dp"
                 android:text="Start Focus ▶"
                 android:textAllCaps="false"
-                android:backgroundTint="@color/primary_blue"
                 android:textColor="@color/text_on_primary"/>
-
-            <TextView
-                android:layout_height="match_parent"
-                android:layout_width="match_parent"
-                android:layout_marginTop="10dp"
-                android:text="Last session: 50 mins"
-                android:textSize="12sp"
-                android:textColor="@color/text_muted"/>
 
         </LinearLayout>
     </androidx.cardview.widget.CardView>
@@ -128,13 +120,6 @@
                     android:textSize="16sp"
                     android:textColor="@color/text_primary"/>
 
-                <TextView
-                    android:id="@+id/tvSeeAll"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="See all →"
-                    android:textSize="14sp"
-                    android:textColor="@color/primary_blue"/>
             </LinearLayout>
 
             <!-- RecyclerView -->

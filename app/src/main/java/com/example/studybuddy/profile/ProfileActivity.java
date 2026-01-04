@@ -32,8 +32,6 @@ public class ProfileActivity extends BaseBottomNavActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
-        setupBottomNav(R.id.nav_modules);
-
         setupBottomNav(R.id.nav_profile);
 
         emailValue = findViewById(R.id.emailValue);

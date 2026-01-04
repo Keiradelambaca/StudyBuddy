@@ -3,7 +3,13 @@ package com.example.studybuddy.tasks;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.*;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -12,15 +18,26 @@ import com.example.studybuddy.adapter.Module;
 import com.example.studybuddy.adapter.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.*;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class TaskDetailActivity extends AppCompatActivity {
 
     private EditText etTitle, etDescription;
-    private Spinner spModule, spPriority;
+    private Spinner spModule, spPriority, spTaskType;
     private Button btnPickDueDate, btnSave, btnDelete;
     private TextView tvError;
 
@@ -37,6 +54,11 @@ public class TaskDetailActivity extends AppCompatActivity {
     private Task currentTask;
 
     private Long selectedDueAt = null;
+
+    private static final List<String> PRIORITIES = Arrays.asList("None", "High", "Medium", "Low");
+    private static final List<String> TASK_TYPES = Arrays.asList(
+            "Select type...", "Task", "Assignment", "Exam", "Demo", "Presentation"
+    );
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -66,6 +88,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         modulesRef = db.collection("users").document(user.getUid()).collection("modules");
 
         setupPrioritySpinner();
+        setupTaskTypeSpinner();
         setupModuleSpinnerPlaceholder();
         setupDueDatePicker();
         setupButtons();
@@ -78,6 +101,7 @@ public class TaskDetailActivity extends AppCompatActivity {
         etDescription = findViewById(R.id.etDescription);
         spModule = findViewById(R.id.spModule);
         spPriority = findViewById(R.id.spPriority);
+        spTaskType = findViewById(R.id.spTaskType);
         btnPickDueDate = findViewById(R.id.btnPickDueDate);
         btnSave = findViewById(R.id.btnSave);
         btnDelete = findViewById(R.id.btnDelete);
@@ -85,14 +109,29 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     private void setupPrioritySpinner() {
-        List<String> priorities = Arrays.asList("None", "High", "Medium", "Low");
-        spPriority.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, priorities));
+        spPriority.setAdapter(new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                PRIORITIES
+        ));
+    }
+
+    private void setupTaskTypeSpinner() {
+        spTaskType.setAdapter(new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                TASK_TYPES
+        ));
     }
 
     private void setupModuleSpinnerPlaceholder() {
         moduleTitles.clear();
         moduleTitles.add("No module (optional)");
-        moduleAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, moduleTitles);
+        moduleAdapter = new ArrayAdapter<>(
+                this,
+                android.R.layout.simple_spinner_dropdown_item,
+                moduleTitles
+        );
         spModule.setAdapter(moduleAdapter);
     }
 
@@ -111,14 +150,14 @@ public class TaskDetailActivity extends AppCompatActivity {
                     picked.set(Calendar.YEAR, year);
                     picked.set(Calendar.MONTH, month);
                     picked.set(Calendar.DAY_OF_MONTH, day);
+                    // Default to 9am, adjust if you add a time picker later
                     picked.set(Calendar.HOUR_OF_DAY, 9);
                     picked.set(Calendar.MINUTE, 0);
                     picked.set(Calendar.SECOND, 0);
                     picked.set(Calendar.MILLISECOND, 0);
 
                     selectedDueAt = picked.getTimeInMillis();
-                    btnPickDueDate.setText("Due: " + new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                            .format(new Date(selectedDueAt)));
+                    btnPickDueDate.setText("Due: " + formatDueFull(selectedDueAt));
                 },
                 c.get(Calendar.YEAR),
                 c.get(Calendar.MONTH),
@@ -146,12 +185,11 @@ public class TaskDetailActivity extends AppCompatActivity {
                         if (m != null) {
                             m.setId(doc.getId());
                             modules.add(m);
-                            moduleTitles.add(m.getTitle());
+                            moduleTitles.add(safe(m.getTitle()));
                         }
                     }
 
                     moduleAdapter.notifyDataSetChanged();
-
                     loadTask();
                 })
                 .addOnFailureListener(e -> {
@@ -179,24 +217,27 @@ public class TaskDetailActivity extends AppCompatActivity {
     }
 
     private void populateUI() {
+        hideError();
+
         etTitle.setText(safe(currentTask.getTitle()));
         etDescription.setText(safe(currentTask.getDescription()));
 
-        // due date
+        // Due date
         selectedDueAt = currentTask.getDueAt();
         if (selectedDueAt != null) {
-            btnPickDueDate.setText("Due: " + new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                    .format(new Date(selectedDueAt)));
+            btnPickDueDate.setText("Due: " + formatDueFull(selectedDueAt));
         } else {
             btnPickDueDate.setText("Pick due date (optional)");
         }
 
-        // priority spinner
+        // Priority
         spPriority.setSelection(priorityToIndex(currentTask.getPriority()));
 
-        // module spinner
-        int idx = moduleIndexFor(currentTask.getModuleId());
-        spModule.setSelection(idx);
+        // Module
+        spModule.setSelection(moduleIndexFor(currentTask.getModuleId()));
+
+        // Task type (required)
+        spTaskType.setSelection(typeToIndex(currentTask.getType()));
     }
 
     private int moduleIndexFor(String moduleId) {
@@ -230,16 +271,46 @@ public class TaskDetailActivity extends AppCompatActivity {
         }
     }
 
+    private int typeToIndex(String storedType) {
+        // TASK_TYPES: Select type...(0), Task(1), Assignment(2), Exam(3), Demo(4), Presentation(5)
+        if (storedType == null) return 0;
+        String t = storedType.trim().toLowerCase(Locale.ROOT);
+        switch (t) {
+            case "task": return 1;
+            case "assignment": return 2;
+            case "exam": return 3;
+            case "demo": return 4;
+            case "presentation": return 5;
+            default: return 0;
+        }
+    }
+
+    private String uiTypeToStored(String uiSelected) {
+        if (uiSelected == null) return null;
+        if ("Select type...".equals(uiSelected)) return null;
+        return uiSelected.trim().toLowerCase(Locale.ROOT); // Task -> task, Assignment -> assignment...
+    }
+
     private void saveTask() {
-        String title = etTitle.getText().toString().trim();
-        String desc = etDescription.getText().toString().trim();
+        hideError();
+
+        String title = etTitle.getText() == null ? "" : etTitle.getText().toString().trim();
+        String desc = etDescription.getText() == null ? "" : etDescription.getText().toString().trim();
 
         if (title.isEmpty()) {
             showError("Task title is required.");
             return;
         }
 
-        // module
+        // Required: task type
+        String uiSelectedType = spTaskType.getSelectedItem() == null ? "Select type..." : spTaskType.getSelectedItem().toString();
+        String storedType = uiTypeToStored(uiSelectedType);
+        if (storedType == null) {
+            Toast.makeText(this, "Please select a task type", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Module (optional)
         int modulePos = spModule.getSelectedItemPosition();
         String moduleId = null;
         String moduleTitle = null;
@@ -250,24 +321,26 @@ public class TaskDetailActivity extends AppCompatActivity {
             moduleTitle = m.getTitle();
         }
 
-        // priority
-        String storedPriority = uiPriorityToStored(spPriority.getSelectedItem().toString());
+        // Priority
+        String storedPriority = uiPriorityToStored(
+                spPriority.getSelectedItem() == null ? "None" : spPriority.getSelectedItem().toString()
+        );
 
         btnSave.setEnabled(false);
-        hideError();
 
         Map<String, Object> updates = new HashMap<>();
         updates.put("title", title);
-        updates.put("description", desc);
+        updates.put("description", desc.isEmpty() ? null : desc);
         updates.put("moduleId", moduleId);
         updates.put("moduleTitle", moduleTitle);
         updates.put("priority", storedPriority);
         updates.put("dueAt", selectedDueAt);
+        updates.put("type", storedType);
 
         taskDoc.update(updates)
                 .addOnSuccessListener(unused -> {
                     btnSave.setEnabled(true);
-                    finish(); // goes back to Tasks page (or Home page) automatically
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     btnSave.setEnabled(true);
@@ -299,5 +372,9 @@ public class TaskDetailActivity extends AppCompatActivity {
     private String safe(String s) {
         return s == null ? "" : s;
     }
-}
 
+    private String formatDueFull(Long dueAt) {
+        if (dueAt == null) return "";
+        return new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date(dueAt));
+    }
+}

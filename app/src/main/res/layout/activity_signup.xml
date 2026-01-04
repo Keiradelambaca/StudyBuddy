@@ -7,7 +7,7 @@
     android:background="@color/background_light"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".SignupActivity">
 
     <ImageView
         android:id="@+id/Logo"
@@ -93,6 +93,7 @@
                 android:layout_width="122dp"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                app:cornerRadius="24dp"
                 android:backgroundTint="@color/secondary_teal_dark"
                 android:text="Sign Up"
                 android:textColor="#FFFFFF" />

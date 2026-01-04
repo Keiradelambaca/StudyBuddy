@@ -51,9 +51,13 @@ public class ModulesAdapter extends RecyclerView.Adapter<ModulesAdapter.ModuleVi
 
         holder.tvMeta.setText(module.getMetaText());
 
-        holder.itemView.setOnClickListener(v -> {
+        View clickable = holder.itemView.findViewById(R.id.moduleRowRoot); // add id in xml (below)
+        if (clickable == null) clickable = holder.itemView;
+
+        clickable.setOnClickListener(v -> {
             if (listener != null) listener.onModuleClick(module);
         });
+
     }
 
     @Override

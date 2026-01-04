@@ -92,11 +92,18 @@
                         android:padding="10dp"
                         android:spinnerMode="dropdown"/>
 
+                    <Spinner
+                        android:id="@+id/spTaskType"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"/>
+
                     <Button
                         android:id="@+id/btnPickDueDate"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="10dp"
+                        app:cornerRadius="24dp"
                         android:backgroundTint="@color/primary_blue_light"
                         android:text="Pick due date (optional)"
                         android:textAllCaps="false"
@@ -107,6 +114,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:layout_marginTop="14dp"
+                        app:cornerRadius="24dp"
                         android:backgroundTint="@color/primary_blue"
                         android:text="Save changes"
                         android:textAllCaps="false"
@@ -117,6 +125,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
                         android:layout_marginTop="10dp"
+                        app:cornerRadius="24dp"
                         android:backgroundTint="@color/error_red"
                         android:text="Delete task"
                         android:textAllCaps="false"

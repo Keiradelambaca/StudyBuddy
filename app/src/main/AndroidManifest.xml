@@ -2,14 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Needed for Firebase + Quotes/News APIs -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Optional: if you later use notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Optional: only if you add Maps + user location -->
-    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:ignore="CoarseFineLocation" />
+
 
     <application
         android:allowBackup="true"
@@ -21,6 +20,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.StudyBuddy"
         tools:targetApi="31">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+
 
         <!-- LAUNCHER (Login) -->
         <activity
@@ -44,6 +48,12 @@
             android:exported="false" />
 
         <activity
+            android:name=".modules.ModulesActivity"
+            android:exported="false" />
+
+        <activity android:name=".modules.ModuleDetailActivity" />
+
+        <activity
             android:name=".tasks.TasksActivity"
             android:exported="false" />
 
@@ -52,31 +62,12 @@
             android:exported="false"/>
 
         <activity
-            android:name=".modules.ModulesActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".profile.ProfileActivity"
             android:exported="false" />
 
-        <!-- Optional extra screens (uncomment if you create them) -->
-        <!--
-        <activity
-            android:name=".ui.tasks.AddEditTaskActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ui.modules.AddEditModuleActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".ui.maps.MapsActivity"
-            android:exported="false" />
-
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-        -->
+        <activity android:name=".focus.FocusActivity" />
+        <activity android:name=".focus.FocusTimerActivity" />
+        <activity android:name=".focus.StudySpotActivity" />
 
     </application>
 

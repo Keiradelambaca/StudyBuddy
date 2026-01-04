@@ -1,5 +1,6 @@
 package com.example.studybuddy.modules;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -69,10 +70,8 @@ public class ModulesActivity extends BaseBottomNavActivity {
     private int selectedEndMin = -1;
     private CollectionReference timetableRef;
     private FrameLayout calendarContainer;
-    private MaterialButtonToggleGroup toggleCalendarView;
-    private View monthView;
-    private View weekView;
-
+    private LinearLayout layoutSchedule;
+    private ListenerRegistration timetableListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,20 +88,68 @@ public class ModulesActivity extends BaseBottomNavActivity {
 
         // Load from DB and keep UI in sync
         listenForModules();
+        listenForTimetableEvents();
     }
+
+    private void listenForTimetableEvents() {
+        if (timetableRef == null) return;
+
+        timetableListener = timetableRef
+                .orderBy("dayOfWeek", Query.Direction.ASCENDING)
+                .orderBy("startMin", Query.Direction.ASCENDING)
+                .addSnapshotListener((snap, err) -> {
+                    if (err != null || snap == null) return;
+
+                    layoutSchedule.removeAllViews();
+
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        TimetableEvent e = doc.toObject(TimetableEvent.class);
+                        if (e == null) continue;
+
+                        TextView tv = new TextView(this);
+                        tv.setText(dayName(e.getDayOfWeek()) + " • " +
+                                formatTime(e.getStartMin()) + " - " + formatTime(e.getEndMin()) +
+                                " • " + e.getTitle());
+                        tv.setPadding(8, 8, 8, 8);
+
+                        layoutSchedule.addView(tv);
+                    }
+
+                    if (snap.isEmpty()) {
+                        TextView tv = new TextView(this);
+                        tv.setText("No classes scheduled yet.");
+                        tv.setPadding(8, 8, 8, 8);
+                        layoutSchedule.addView(tv);
+                    }
+                });
+    }
+
+    private String dayName(int calendarConst) {
+        switch (calendarConst) {
+            case Calendar.SUNDAY: return "Sunday";
+            case Calendar.MONDAY: return "Monday";
+            case Calendar.TUESDAY: return "Tuesday";
+            case Calendar.WEDNESDAY: return "Wednesday";
+            case Calendar.THURSDAY: return "Thursday";
+            case Calendar.FRIDAY: return "Friday";
+            case Calendar.SATURDAY: return "Saturday";
+            default: return "Day";
+        }
+    }
+
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (modulesListener != null) {
-            modulesListener.remove();
-            modulesListener = null;
-        }
+        if (modulesListener != null) modulesListener.remove();
+        if (timetableListener != null) timetableListener.remove();
     }
 
     private void bindViews() {
         rvModules = findViewById(R.id.rvModules);
         emptyModulesState = findViewById(R.id.emptyModulesState);
+
+        layoutSchedule = findViewById(R.id.layoutSchedule);
 
         etModuleTitle = findViewById(R.id.etModuleTitle);
         etModuleDescription = findViewById(R.id.etModuleDescription);
@@ -121,20 +168,14 @@ public class ModulesActivity extends BaseBottomNavActivity {
 
     private void setupRecyclerView() {
         adapter = new ModulesAdapter(modules, module -> {
-            // TODO: open ModuleDetailActivity later if you want
-            // Intent intent = new Intent(this, ModuleDetailActivity.class);
-            // intent.putExtra("MODULE_ID", module.getId());
-            // startActivity(intent);
+            Intent intent = new Intent(this, ModuleDetailActivity.class);
+            intent.putExtra("MODULE_ID", module.getId());
+            startActivity(intent);
         });
-
         rvModules.setLayoutManager(new LinearLayoutManager(this));
         rvModules.setAdapter(adapter);
     }
 
-    /**
-     * If you already set spinner adapters elsewhere, this won't override them.
-     * This is just to prevent spinners being empty/null during early testing.
-     */
     private void setupSpinnersIfEmpty() {
         if (spYear.getAdapter() == null) {
             List<String> years = Arrays.asList("1", "2", "3", "4");
@@ -201,17 +242,12 @@ public class ModulesActivity extends BaseBottomNavActivity {
                     modules.clear();
 
                     for (DocumentSnapshot doc : snap.getDocuments()) {
-                        // Requires Module to have a public no-arg constructor + setters
                         Module m = doc.toObject(Module.class);
-
                         if (m != null) {
-                            // IMPORTANT: make sure the module has its document id stored
-                            // If your Module class has setId(), use it:
                             m.setId(doc.getId());
                             modules.add(m);
                         }
                     }
-
                     adapter.notifyDataSetChanged();
                     updateModulesUI();
                 });
@@ -352,29 +388,6 @@ public class ModulesActivity extends BaseBottomNavActivity {
         showValidation(msg);
     }
 
-    private void setupCalendarSwitcher() {
-        monthView = getLayoutInflater().inflate(R.layout.view_calendar_month, calendarContainer, false);
-        weekView  = getLayoutInflater().inflate(R.layout.view_calendar_week, calendarContainer, false);
-
-        // Default: Month
-        showMonth();
-    }
-
-    private void showMonth() {
-        calendarContainer.removeAllViews();
-        calendarContainer.addView(monthView);
-
-        // TODO: init month calendar + click date -> load events
-    }
-
-    private void showWeek(boolean singleDay) {
-        calendarContainer.removeAllViews();
-        calendarContainer.addView(weekView);
-
-        // TODO: init WeekView
-        // If singleDay=true, configure WeekView to show one day; else 5/7 days.
-    }
-
     private void setupTimePickers() {
         btnPickStartTime.setOnClickListener(v -> openTimePicker(true));
         btnPickEndTime.setOnClickListener(v -> openTimePicker(false));
@@ -410,4 +423,5 @@ public class ModulesActivity extends BaseBottomNavActivity {
         int m = mins % 60;
         return String.format(Locale.getDefault(), "%02d:%02d", h, m);
     }
+
 }

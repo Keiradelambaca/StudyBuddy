@@ -13,14 +13,9 @@ import java.util.Map;
 
 public class FirestoreRepo {
 
-    private static final String COLLECTION_PROFILES = "profiles";
-
+    private static final String COLLECTION_PROFILES = "users";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-    /**
-     * Returns the current user's profile document snapshot.
-     * profiles/{uid}
-     */
     public Task<DocumentSnapshot> getProfile() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {

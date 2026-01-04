@@ -89,27 +89,13 @@
                         android:background="@color/surface_alt"
                         android:padding="12dp">
 
-                        <TextView
-                            android:id="@+id/tvCalendarPlaceholder"
+                        <LinearLayout
+                            android:id="@+id/layoutSchedule"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:gravity="center"
-                            android:text="Calendar goes here"
-                            android:textColor="@color/text_muted"
-                            android:textSize="14sp" />
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical" />
+
                     </FrameLayout>
-
-                    <!-- Optional: add event button -->
-                    <Button
-                        android:id="@+id/btnAddCalendarEvent"
-                        android:layout_width="match_parent"
-                        android:layout_height="46dp"
-                        android:layout_marginTop="12dp"
-                        android:text="Add Event (Assignment / Exam / Demo)"
-                        android:textAllCaps="false"
-                        android:backgroundTint="@color/primary_blue"
-                        android:textColor="@color/text_on_primary"/>
-
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -151,13 +137,6 @@
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
-                        <TextView
-                            android:id="@+id/tvModulesSeeAll"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="See all →"
-                            android:textColor="@color/primary_blue"
-                            android:textSize="14sp" />
                     </LinearLayout>
 
                     <!-- Modules RecyclerView (scrolls with page) -->
@@ -325,6 +304,7 @@
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_weight="1"
+                            app:cornerRadius="24dp"
                             android:backgroundTint="@color/primary_blue_light"
                             android:text="Start time"
                             android:textAllCaps="false"
@@ -339,6 +319,7 @@
                             android:layout_width="0dp"
                             android:layout_height="48dp"
                             android:layout_weight="1"
+                            app:cornerRadius="24dp"
                             android:backgroundTint="@color/primary_blue_light"
                             android:text="End time"
                             android:textAllCaps="false"
@@ -351,6 +332,7 @@
                         android:layout_height="50dp"
                         android:layout_marginTop="14dp"
                         android:backgroundTint="@color/primary_blue"
+                        app:cornerRadius="24dp"
                         android:text="Add Module"
                         android:textAllCaps="false"
                         android:textColor="@color/text_on_primary" />

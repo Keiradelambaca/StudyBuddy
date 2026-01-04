@@ -21,24 +21,35 @@ import com.example.studybuddy.R;
 import com.example.studybuddy.adapter.Module;
 import com.example.studybuddy.adapter.Task;
 import com.example.studybuddy.adapter.TasksAdapter;
+import com.example.studybuddy.util.SimpleItemSelectedListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.*;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
-import com.example.studybuddy.util.SimpleItemSelectedListener;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class TasksActivity extends BaseBottomNavActivity {
 
-    // UI
+    // UI (list + empty state)
     private RecyclerView rvTasks;
     private LinearLayout emptyTasksState;
     private Spinner spPriorityFilter;
 
+    // UI (add form)
     private EditText etTaskTitle, etTaskDescription;
-    private Spinner spTaskModule, spTaskPriority;
+    private Spinner spTaskModule, spTaskPriority, spTaskType;
     private Button btnPickDueDate, btnAddTask;
     private TextView tvTaskValidation;
 
@@ -62,11 +73,16 @@ public class TasksActivity extends BaseBottomNavActivity {
     // Due date
     private Long selectedDueAt = null;
 
+    // Spinner options
+    private static final List<String> FILTERS = Arrays.asList("All", "High", "Medium", "Low", "None");
+    private static final List<String> PRIORITIES = Arrays.asList("None", "High", "Medium", "Low");
+    private static final List<String> TYPES = Arrays.asList("Select type...", "Task", "Assignment", "Exam", "Demo", "Presentation");
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_tasks);
-        setupBottomNav(R.id.nav_modules);
+        setupBottomNav(R.id.nav_tasks);
 
         bindViews();
         setupRecyclerView();
@@ -75,9 +91,12 @@ public class TasksActivity extends BaseBottomNavActivity {
         setupDueDatePicker();
         setupAddTask();
 
-        listenForModules(); // fill module spinner
-        listenForTasks();   // live tasks list
+        if (tasksRef != null && modulesRef != null) {
+            listenForModules();
+            listenForTasks();
+        }
     }
+
 
     @Override
     protected void onDestroy() {
@@ -95,6 +114,7 @@ public class TasksActivity extends BaseBottomNavActivity {
         etTaskDescription = findViewById(R.id.etTaskDescription);
         spTaskModule = findViewById(R.id.spTaskModule);
         spTaskPriority = findViewById(R.id.spTaskPriority);
+        spTaskType = findViewById(R.id.spTaskType); // ✅ must exist in XML
         btnPickDueDate = findViewById(R.id.btnPickDueDate);
         btnAddTask = findViewById(R.id.btnAddTask);
         tvTaskValidation = findViewById(R.id.tvTaskValidation);
@@ -111,18 +131,22 @@ public class TasksActivity extends BaseBottomNavActivity {
     }
 
     private void setupSpinners() {
-        // Filter spinner (includes "All")
-        List<String> filters = Arrays.asList("All", "High", "Medium", "Low", "None");
-        spPriorityFilter.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, filters));
+        // Filter spinner
+        spPriorityFilter.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, FILTERS));
         spPriorityFilter.setSelection(0);
         spPriorityFilter.setOnItemSelectedListener(new SimpleItemSelectedListener(this::applyFilter));
 
-        // Priority input spinner (stored on task)
-        List<String> priorities = Arrays.asList("None", "High", "Medium", "Low");
-        spTaskPriority.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, priorities));
+        // Priority spinner (stored on task)
+        spTaskPriority.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, PRIORITIES));
         spTaskPriority.setSelection(0);
 
-        // Module spinner (loaded from Firestore). Start with placeholder.
+        // Type spinner (REQUIRED)
+        if (spTaskType != null) {
+            spTaskType.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, TYPES));
+            spTaskType.setSelection(0);
+        }
+
+        // Module spinner placeholder
         moduleTitles.clear();
         moduleTitles.add("No module (optional)");
         moduleSpinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, moduleTitles);
@@ -143,7 +167,7 @@ public class TasksActivity extends BaseBottomNavActivity {
         }
 
         modulesRef = db.collection("users").document(user.getUid()).collection("modules");
-        tasksRef   = db.collection("users").document(user.getUid()).collection("tasks");
+        tasksRef = db.collection("users").document(user.getUid()).collection("tasks");
     }
 
     private void listenForModules() {
@@ -156,9 +180,8 @@ public class TasksActivity extends BaseBottomNavActivity {
                         Log.e("TasksActivity", "modules listen err", err);
                         return;
                     }
-                    modules.clear();
 
-                    // reset titles but keep placeholder
+                    modules.clear();
                     moduleTitles.clear();
                     moduleTitles.add("No module (optional)");
 
@@ -177,41 +200,41 @@ public class TasksActivity extends BaseBottomNavActivity {
                 });
     }
 
-        private void listenForTasks() {
-            tasksListener = tasksRef
-                    .orderBy("createdAt", Query.Direction.DESCENDING)
-                    .addSnapshotListener((snap, err) -> {
+    private void listenForTasks() {
+        if (tasksRef == null) return;
 
-                        if (err != null) {
-                            showValidation("Failed to load tasks: " + err.getMessage());
-                            return;
-                        }
+        tasksListener = tasksRef
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener((snap, err) -> {
 
-                        allTasks.clear();
+                    if (err != null) {
+                        showValidation("Failed to load tasks: " + err.getMessage());
+                        return;
+                    }
 
-                        if (snap != null) {
-                            for (DocumentSnapshot doc : snap.getDocuments()) {
+                    allTasks.clear();
 
-                                Task t = doc.toObject(Task.class);
-                                if (t != null) {
-                                    t.setId(doc.getId());
-                                    allTasks.add(t);
-                                }
+                    if (snap != null) {
+                        for (DocumentSnapshot doc : snap.getDocuments()) {
+                            Task t = doc.toObject(Task.class);
+                            if (t != null) {
+                                t.setId(doc.getId());
+                                allTasks.add(t);
                             }
                         }
+                    }
 
-                        applyFilter();
-                        updateTasksUI();
-                    });
-        }
+                    applyFilter();
+                    updateTasksUI();
+                });
+    }
 
-
-        private void applyFilter() {
+    private void applyFilter() {
         String selected = safeSpinnerValue(spPriorityFilter); // All / High / Medium / Low / None
-
         filteredTasks.clear();
 
         String wanted = mapUiPriorityToStored(selected); // null for All, else "HIGH"/"MEDIUM"/"LOW"/"NONE"
+
         for (Task t : allTasks) {
             if (wanted == null) {
                 filteredTasks.add(t);
@@ -221,7 +244,7 @@ public class TasksActivity extends BaseBottomNavActivity {
             }
         }
 
-        adapter.notifyDataSetChanged();
+        adapter.setTasks(filteredTasks);
     }
 
     private void updateTasksUI() {
@@ -240,6 +263,7 @@ public class TasksActivity extends BaseBottomNavActivity {
 
     private void openDatePicker() {
         Calendar c = Calendar.getInstance();
+        if (selectedDueAt != null) c.setTimeInMillis(selectedDueAt);
 
         DatePickerDialog dialog = new DatePickerDialog(
                 this,
@@ -254,7 +278,8 @@ public class TasksActivity extends BaseBottomNavActivity {
                     picked.set(Calendar.MILLISECOND, 0);
 
                     selectedDueAt = picked.getTimeInMillis();
-                    btnPickDueDate.setText("Due: " + new SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(new Date(selectedDueAt)));
+                    btnPickDueDate.setText("Due: " + new SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                            .format(new Date(selectedDueAt)));
                 },
                 c.get(Calendar.YEAR),
                 c.get(Calendar.MONTH),
@@ -266,23 +291,32 @@ public class TasksActivity extends BaseBottomNavActivity {
 
     private void setupAddTask() {
         btnAddTask.setOnClickListener(v -> {
-            String title = etTaskTitle.getText().toString().trim();
-            String desc = etTaskDescription.getText().toString().trim();
+            hideValidation();
+
+            String title = etTaskTitle.getText() == null ? "" : etTaskTitle.getText().toString().trim();
+            String desc = etTaskDescription.getText() == null ? "" : etTaskDescription.getText().toString().trim();
 
             if (title.isEmpty()) {
                 showValidation("Task title is required");
                 return;
             }
 
+            // ✅ REQUIRED: type
+            String typeUi = safeSpinnerValue(spTaskType);
+            if ("Select type...".equals(typeUi)) {
+                showValidation("Task type is required");
+                return;
+            }
+            String storedType = typeUi.toLowerCase(Locale.ROOT); // task/assignment/exam/demo/presentation
+
             if (tasksRef == null) {
                 showValidation("Not connected. Please log in again.");
                 return;
             }
 
-            hideValidation();
             btnAddTask.setEnabled(false);
 
-            // Module selection
+            // Module selection (optional)
             int modulePos = spTaskModule.getSelectedItemPosition();
             String moduleId = null;
             String moduleTitle = null;
@@ -299,11 +333,12 @@ public class TasksActivity extends BaseBottomNavActivity {
 
             Map<String, Object> data = new HashMap<>();
             data.put("title", title);
-            data.put("description", desc);
+            data.put("description", desc.isEmpty() ? null : desc);
             data.put("moduleId", moduleId);
             data.put("moduleTitle", moduleTitle);
             data.put("priority", storedPriority);
-            data.put("dueAt", selectedDueAt); // can be null
+            data.put("type", storedType);              // ✅ save type
+            data.put("dueAt", selectedDueAt);          // can be null
             data.put("completed", false);
             data.put("createdAt", System.currentTimeMillis());
 
@@ -324,9 +359,10 @@ public class TasksActivity extends BaseBottomNavActivity {
         etTaskDescription.setText("");
         spTaskModule.setSelection(0);
         spTaskPriority.setSelection(0);
+        if (spTaskType != null) spTaskType.setSelection(0);
         selectedDueAt = null;
         btnPickDueDate.setText("Pick due date (optional)");
-        tvTaskValidation.setVisibility(View.GONE);
+        hideValidation();
     }
 
     private String safeSpinnerValue(Spinner spinner) {
@@ -334,6 +370,10 @@ public class TasksActivity extends BaseBottomNavActivity {
         return spinner.getSelectedItem().toString();
     }
 
+    /**
+     * Maps UI value to stored priority.
+     * Returns null ONLY for "All" filter selection.
+     */
     private String mapUiPriorityToStored(String ui) {
         if (ui == null) return "NONE";
         switch (ui.toLowerCase(Locale.ROOT)) {

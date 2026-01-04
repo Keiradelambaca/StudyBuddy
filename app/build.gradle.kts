@@ -49,6 +49,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.gridlayout)
 
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
@@ -81,4 +82,16 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Google Maps
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+
+    // Location (for user's current position)
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // Google Places API (cafes & libraries)
+    implementation("com.google.android.libraries.places:places:3.5.0")
+
+    implementation("com.android.volley:volley:1.2.1")
+
 }

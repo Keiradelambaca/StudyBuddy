@@ -10,8 +10,8 @@
     app:cardUseCompatPadding="true"
     app:cardBackgroundColor="@color/surface_alt">
 
-    <!-- clickable ripple surface -->
     <LinearLayout
+        android:id="@+id/moduleRowRoot"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"

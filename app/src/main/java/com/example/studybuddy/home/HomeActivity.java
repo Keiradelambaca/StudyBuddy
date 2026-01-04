@@ -2,33 +2,40 @@ package com.example.studybuddy.home;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
 import com.example.studybuddy.BaseBottomNavActivity;
 import com.example.studybuddy.R;
 import com.example.studybuddy.adapter.TasksAdapter;
 import com.example.studybuddy.adapter.Task;
 import com.example.studybuddy.focus.FocusActivity;
-import com.example.studybuddy.modules.ModulesActivity;
-import com.example.studybuddy.profile.ProfileActivity;
 import com.example.studybuddy.tasks.TaskDetailActivity;
 import com.example.studybuddy.tasks.TasksActivity;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.toolbox.JsonArrayRequest;
+import org.json.JSONObject;
 
 /**
  * Matches activity_home.xml
@@ -44,18 +51,14 @@ public class HomeActivity extends BaseBottomNavActivity {
     private View emptyTasksState;
     private TasksAdapter taskAdapter;
     private List<Task> tasks = new ArrayList<>();
+    private TextView tvGreeting, tvSummary, tvQuoteText, tvQuoteAuthor;
 
-    private TextView tvGreeting;
-    private TextView tvSummary;
-
-    private TextView tvQuoteText;
-    private TextView tvQuoteAuthor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
-        setupBottomNav(R.id.nav_modules);
+        setupBottomNav(R.id.nav_home);
 
         bindViews();
         loadUserNameFromFirestoreAndSetGreeting();
@@ -77,6 +80,7 @@ public class HomeActivity extends BaseBottomNavActivity {
         // Quote views (if you kept them)
         tvQuoteText = findViewById(R.id.tvQuoteText);
         tvQuoteAuthor = findViewById(R.id.tvQuoteAuthor);
+
     }
 
     private void setupTasksRecycler() {
@@ -94,11 +98,6 @@ public class HomeActivity extends BaseBottomNavActivity {
         // Focus button
         findViewById(R.id.btnStartFocus).setOnClickListener(v ->
                 startActivity(new Intent(this, FocusActivity.class))
-        );
-
-        // "See all" tasks
-        findViewById(R.id.tvSeeAll).setOnClickListener(v ->
-                startActivity(new Intent(this, TasksActivity.class))
         );
     }
 
@@ -151,21 +150,46 @@ public class HomeActivity extends BaseBottomNavActivity {
                 .addOnFailureListener(e -> setGreetingText("")); // fallback
     }
 
-
-    /**
-     * TODO: Replace this with real Room query / repository call.
-     * For now, it loads a small sample list so your UI is working end-to-end.
-     */
     private void loadUpcomingTasks() {
-        // ---- SAMPLE DATA (replace with DB) ----
-        List<Task> tasks = new ArrayList<>();
-        // --------------------------------------
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
 
-        taskAdapter.setTasks(tasks);
-        updateTasksEmptyState(tasks);
+        FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(user.getUid())
+                .collection("tasks")
+                .orderBy("dueAt", Query.Direction.ASCENDING)
+                .limit(20) // grab some then filter
+                .get()
+                .addOnSuccessListener(snap -> {
 
-        // Optional: update summary text based on list size
-        tvSummary.setText("You have " + tasks.size() + " upcoming tasks");
+                    long now = System.currentTimeMillis();
+                    List<Task> upcoming = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : snap.getDocuments()) {
+                        Task t = doc.toObject(Task.class);
+                        if (t == null) continue;
+
+                        t.setId(doc.getId());
+
+                        long dueMillis = 0;
+
+                        Object raw = doc.get("dueAt");
+                        if (raw instanceof Long) {
+                            dueMillis = (Long) raw;
+                        } else if (raw instanceof com.google.firebase.Timestamp) {
+                            dueMillis = ((com.google.firebase.Timestamp) raw).toDate().getTime();
+                        }
+
+                        if (dueMillis >= now) upcoming.add(t);
+                        if (upcoming.size() == 3) break;
+                    }
+
+                    taskAdapter.setTasks(upcoming);
+                    updateTasksEmptyState(upcoming);
+                    tvSummary.setText("You have " + upcoming.size() + " upcoming tasks");
+                });
+
     }
 
     private void updateTasksEmptyState(List<Task> tasks) {
@@ -174,18 +198,50 @@ public class HomeActivity extends BaseBottomNavActivity {
         emptyTasksState.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
     }
 
-    /**
-     * TODO: Replace with your Quotes API call.
-     */
+    // QUOTE OF THE DAY
     private void loadDailyQuote() {
-        if (tvQuoteText == null || tvQuoteAuthor == null) return;
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url = "https://zenquotes.io/api/today";
 
-        // Simple placeholder (swap with API response)
-        tvQuoteText.setText("“Success is the sum of small efforts repeated daily.”");
-        tvQuoteAuthor.setText("— Robert Collier");
+        JsonArrayRequest req = new JsonArrayRequest(
+                Request.Method.GET, url, null,
+                arr -> {
+                    try {
+                        JSONObject obj = arr.getJSONObject(0);
+                        String quote = obj.optString("q");
+                        String author = obj.optString("a");
+
+                        tvQuoteText.setText("“" + quote + "”");
+                        tvQuoteAuthor.setText("— " + author);
+                    } catch (Exception e) {
+                        tvQuoteText.setText("“Small progress is still progress.”");
+                        tvQuoteAuthor.setText("— StudyBuddy");
+                    }
+                },
+                err -> {
+                    String msg = (err.getMessage() != null) ? err.getMessage() : err.toString();
+                    Log.e("QOTD", "Volley error: " + msg, err);
+
+                    tvQuoteText.setText("“Small progress is still progress.”");
+                    tvQuoteAuthor.setText("— StudyBuddy");
+                }
+        );
+
+        // optional: avoid hanging forever
+        req.setRetryPolicy(new DefaultRetryPolicy(
+                8000,
+                2,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
+        ));
+
+        queue.add(req);
     }
 
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadUpcomingTasks();
+    }
+
 }
-
-

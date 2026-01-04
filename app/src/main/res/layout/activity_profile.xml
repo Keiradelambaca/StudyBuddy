@@ -124,7 +124,8 @@
                 android:id="@+id/saveProfileBtn"
                 android:layout_marginTop="14dp"
                 android:text="Save"
-                android:layout_width="match_parent"
+                app:cornerRadius="24dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/secondary_teal_dark"/>
 
@@ -132,6 +133,7 @@
                 android:id="@+id/signOutBtn"
                 android:layout_marginTop="10dp"
                 android:text="Sign Out"
+                app:cornerRadius="24dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/secondary_teal_dark"/>
